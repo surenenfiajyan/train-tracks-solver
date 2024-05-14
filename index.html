@@ -22,50 +22,52 @@
 		</div>
 
 		<div class="row" id="selectBtns">
-			<button data-value="lr" class="item">
-				<svg width="100" height="100">
-					<line x1="0" y1="50%" x2="100%" y2="50%" stroke="black" stroke-width="20%" />
+			<button data-value="lr" class="item" title="Left - Right">
+				<svg width="100" height="100" viewBox="0 0 100 100">
+					<line x1="0" y1="50" x2="100" y2="50" stroke="black" stroke-width="20" />
 				</svg>
 			</button>
-			<button data-value="td" class="item">
-				<svg width="100" height="100">
-					<line x1="50%" y1="0" x2="50%" y2="100%" stroke="black" stroke-width="20%" />
-				</svg>
-			</button>
-
-			<button data-value="tl" class="item">
-				<svg width="100" height="100">
-					<line x1="60%" y1="-10%" x2="-10%" y2="60%" stroke="black" stroke-width="16%" />
+			<button data-value="td" class="item" title="Up - Down">
+				<svg width="100" height="100" viewBox="0 0 100 100">
+					<line x1="50" y1="0" x2="50" y2="100" stroke="black" stroke-width="20" />
 				</svg>
 			</button>
 
-			<button data-value="tr" class="item">
-				<svg width="100" height="100">
-					<line x1="40%" y1="-10%" x2="110%" y2="60%" stroke="black" stroke-width="16%" />
+			<button data-value="tl" class="item" title="Up - Left">
+				<svg width="100" height="100" viewBox="0 0 100 100">
+					<circle cx="0" cy="0" r="50" stroke="black" stroke-width="20" fill="none" />
 				</svg>
 			</button>
 
-			<button data-value="dl" class="item">
-				<svg width="100" height="100">
-					<line x1="60%" y1="110%" x2="-10%" y2="40%" stroke="black" stroke-width="16%" />
-				</svg>
-			</button>
-			<button data-value="dr" class="item">
-				<svg width="100" height="100">
-					<line x1="40%" y1="110%" x2="110%" y2="40%" stroke="black" stroke-width="16%" />
+			<button data-value="tr" class="item" title="Up - Right">
+				<svg width="100" height="100" viewBox="0 0 100 100">
+					<circle cx="100" cy="0" r="50" stroke="black" stroke-width="20" fill="none" />
 				</svg>
 			</button>
 
-			<button data-value="wall" class="item">
-				<svg width="100" height="100">
-					<line x1="0" y1="0" x2="100%" y2="100%" stroke="black" stroke-width="5%" />
-					<line x1="0" y1="100%" x2="100%" y2="0" stroke="black" stroke-width="5%" />
+			<button data-value="dl" class="item" title="Down - Left">
+				<svg width="100" height="100" viewBox="0 0 100 100">
+					<circle cx="0" cy="100" r="50" stroke="black" stroke-width="20" fill="none" />
 				</svg>
 			</button>
-			<button data-value="erase" class="item">
-				<svg width="100" height="100">
-					<rect width="20%" height="35%" x="40%" y="15%" stroke="black" fill="white" stroke-width="2%" />
-					<rect width="20%" height="35%" x="40%" y="50%" stroke="black" fill="black" stroke-width="2%" />
+			<button data-value="dr" class="item" title="Down - Right">
+				<svg width="100" height="100" viewBox="0 0 100 100">
+					<circle cx="100" cy="100" r="50" stroke="black" stroke-width="20" fill="none" />
+				</svg>
+			</button>
+
+			<button data-value="wall" class="item" title="Wall">
+				<svg width="100" height="100" viewBox="0 0 100 100">
+					<line x1="0" y1="0" x2="100" y2="100" stroke="black" stroke-width="5" />
+					<line x1="0" y1="100" x2="100" y2="0" stroke="black" stroke-width="5" />
+				</svg>
+			</button>
+			<button data-value="erase" class="item" title="Erase">
+				<svg width="100" height="100" viewBox="0 0 100 100">
+					<g transform="rotate(45 50 50)">
+						<rect width="20" height="35" x="40" y="15" stroke="black" fill="white" stroke-width="2" />
+						<rect width="20" height="35" x="40" y="50" stroke="black" fill="black" stroke-width="2" />
+					</g>
 				</svg>
 			</button>
 		</div>
