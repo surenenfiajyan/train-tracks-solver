@@ -134,11 +134,6 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 }
 
 function putWalls(tracks) {
-	console.log('-----------------------------------------------------------');
-	for (const r of tracks) {
-		console.log(r.map(x => x.isWall ? ' x' : (x.isEmpty && x.value ? x.value : '  ')));
-	}
-
 	const cornerTrack = tracks[0][0];
 	let repeat;
 
@@ -359,13 +354,12 @@ function putWalls(tracks) {
 				}
 			}
 		}
-		/*
-		console.log('-----------------------------------------------------------');
-		for (const r of tracks) {
-			console.log(r.map(x => x.isWall ? ' x' : (x.isEmpty && x.value ? x.value : '  ')));
-		}
-		*/
 	} while (repeat);
+
+	console.log('-----------------------------------------------------------');
+	for (const r of tracks) {
+		console.log(r.map(x => x.isWall ? ' x' : (x.isEmpty && x.value ? x.value : '  ')));
+	}
 }
 
 self.onmessage = message => {
