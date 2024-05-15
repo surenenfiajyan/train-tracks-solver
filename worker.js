@@ -258,7 +258,7 @@ function putWalls(tracks) {
 						++expectedTrackCount;
 					}
 
-					if (track.isWall) {
+					if (track.isWall && !track.isTrack) {
 						++walls;
 					} else {
 						++occuredTracks;
@@ -312,7 +312,7 @@ function putWalls(tracks) {
 						++expectedTrackCount;
 					}
 
-					if (track.isWall) {
+					if (track.isWall && !track.isTrack) {
 						++walls;
 					} else {
 						++occuredTracks;
@@ -358,7 +358,7 @@ function putWalls(tracks) {
 
 	console.log('-----------------------------------------------------------');
 	for (const r of tracks) {
-		console.log(r.map(x => x.isWall ? ' x' : (x.isEmpty && x.value ? x.value : '  ')));
+		console.log(r.map(x => x.isWall && !x.value ? ' x' : (x.isEmpty && x.value ? x.value : '  ')));
 	}
 }
 
