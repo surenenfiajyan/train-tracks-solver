@@ -1,9 +1,32 @@
+const fromL = { 't': 'dr', 'd': 'tr', 'r': 'lr' };
+const fromR = { 't': 'dl', 'd': 'tl', 'l': 'lr' };
+const fromT = { 'r': 'dl', 'd': 'td', 'l': 'dr' };
+const fromD = { 'r': 'tl', 't': 'td', 'l': 'tr' };
+
+
+const neighboursOfL = ['tl', 'lr', 'dl'];
+const neighboursOfR = ['tr', 'lr', 'dr'];
+const neighboursOfT = ['td', 'tr', 'tl'];
+const neighboursOfD = ['td', 'dr', 'dl'];
+
+let storedTracks = null;
+let recursiveCalls = 0;
+
 function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, from = null) {
 	const minDistance = Math.abs(currentEntry.x - endEntry.x) + Math.abs(currentEntry.y - endEntry.y);
 
 	if (minDistance >= tracksToAdd + tracksToConnect) {
 		return;
 	}
+
+	/*
+		++recursiveCalls;
+		const shouldPutWalls = true && recursiveCalls % 10000 === 0;
+
+		if (shouldPutWalls) {
+			putWalls();
+		}
+	*/
 
 	if (tracksToAdd > 0 && currentEntry.isEmpty && currentEntry.xCount.value > 0 && currentEntry.yCount.value > 0) {
 		currentEntry.isEmpty = false;
@@ -18,9 +41,9 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 
 			if (
 				neighbour !== null &&
-				(neighbour.isEmpty || !neighbour.isWall && ['tl', 'lr', 'dl'].includes(neighbour.value))
+				(neighbour.isEmpty || !neighbour.isWall && neighboursOfL.includes(neighbour.value))
 			) {
-				currentEntry.value = { 't': 'dr', 'd': 'tr', 'r': 'lr' }[from];
+				currentEntry.value = fromL[from];
 				solveRecursively(neighbour, endEntry, tracksToAdd, tracksToConnect, 'r');
 			}
 		}
@@ -30,9 +53,9 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 
 			if (
 				neighbour !== null &&
-				(neighbour.isEmpty || !neighbour.isWall && ['tr', 'lr', 'dr'].includes(neighbour.value))
+				(neighbour.isEmpty || !neighbour.isWall && neighboursOfR.includes(neighbour.value))
 			) {
-				currentEntry.value = { 't': 'dl', 'd': 'tl', 'l': 'lr' }[from];
+				currentEntry.value = fromR[from];
 				solveRecursively(neighbour, endEntry, tracksToAdd, tracksToConnect, 'l');
 			}
 		}
@@ -42,9 +65,9 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 
 			if (
 				neighbour !== null &&
-				(neighbour.isEmpty || !neighbour.isWall && ['td', 'tr', 'tl'].includes(neighbour.value))
+				(neighbour.isEmpty || !neighbour.isWall && neighboursOfT.includes(neighbour.value))
 			) {
-				currentEntry.value = { 'r': 'dl', 'd': 'td', 'l': 'dr' }[from];
+				currentEntry.value = fromT[from];
 				solveRecursively(neighbour, endEntry, tracksToAdd, tracksToConnect, 'd');
 			}
 		}
@@ -54,9 +77,9 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 
 			if (
 				neighbour !== null &&
-				(neighbour.isEmpty || !neighbour.isWall && ['td', 'dr', 'dl'].includes(neighbour.value))
+				(neighbour.isEmpty || !neighbour.isWall && neighboursOfD.includes(neighbour.value))
 			) {
-				currentEntry.value = { 'r': 'tl', 't': 'td', 'l': 'tr' }[from];
+				currentEntry.value = fromD[from];
 				solveRecursively(neighbour, endEntry, tracksToAdd, tracksToConnect, 't');
 			}
 		}
@@ -131,14 +154,35 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 		tracksToConnect += currentEntry.groupCount;
 		currentEntry.oppositeEnd.isWall = currentEntry.isWall = false;
 	}
+
+	/*
+		if (shouldPutWalls) {
+			restoreWalls();
+		}
+	*/
 }
 
-function putWalls(tracks) {
-	const cornerTrack = tracks[0][0];
+const oldVersionsOfTracks = [];
+
+function restoreWalls() {
+	const oldTracks = oldVersionsOfTracks.pop();
+
+	if (oldTracks) {
+		for (let i = 0; i < oldTracks.length; ++i) {
+			for (let j = 0; j < oldTracks[i].length; ++j) {
+				Object.assign(storedTracks[i][j], oldTracks[i][j]);
+			}
+		}
+	}
+}
+
+function putWalls() {
+	oldVersionsOfTracks.push(storedTracks.map(r => r.map(t => ({ ...t }))));
+	const cornerTrack = storedTracks[0][0];
 	let repeat;
 
-	const height = tracks.length;
-	const width = tracks[0].length;
+	const height = storedTracks.length;
+	const width = storedTracks[0].length;
 
 	function isSurrounded(t) {
 		let surrounded = 0;
@@ -355,11 +399,6 @@ function putWalls(tracks) {
 			}
 		}
 	} while (repeat);
-
-	console.log('-----------------------------------------------------------');
-	for (const r of tracks) {
-		console.log(r.map(x => x.isWall && !x.value ? ' x' : (x.isEmpty && x.value ? x.value : '  ')));
-	}
 }
 
 self.onmessage = message => {
@@ -368,12 +407,21 @@ self.onmessage = message => {
 
 		console.log(tracks, currentEntry, endEntry, tracksToAdd, tracksToConnect);
 
+		storedTracks = tracks;
+		recursiveCalls = 0;
+
 		try {
 			putWalls(tracks);
+
+			console.log('-----------------------------------------------------------');
+			for (const r of tracks) {
+				console.log(r.map(x => x.isWall && !x.value ? ' x' : (x.isEmpty && x.value ? x.value : '  ')));
+			}
 
 			solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect);
 			self.postMessage({ message: 'No solution found' })
 		} catch (message) {
+			console.log(recursiveCalls);
 			self.postMessage({ tracks, message })
 		}
 	});
