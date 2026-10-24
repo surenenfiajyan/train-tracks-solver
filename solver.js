@@ -75,7 +75,15 @@ horizontalCnt.onchange = verticalCnt.onchange = ev => {
 	}
 };
 
-itemsCnt.onclick = ev => {
+itemsCnt.onmousemove = ev => {
+	if (ev.buttons & 1) {
+		onCellClick(ev);
+	}
+}
+
+itemsCnt.onclick = onCellClick;
+
+function onCellClick(ev) {
 	terminateWorker();
 	const target = ev.target.closest('button');
 
@@ -90,7 +98,7 @@ itemsCnt.onclick = ev => {
 
 		target.replaceWith(newTarget);
 	}
-};
+}
 
 function resize() {
 	terminateWorker();
