@@ -23,7 +23,7 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 	///*
 	++depth;
 	++recursiveCalls;
-	const shouldPutWalls = true && depth < 15;
+	const shouldPutWalls = true && depth < 20;
 
 	if (shouldPutWalls) {
 		//console.log('before')
