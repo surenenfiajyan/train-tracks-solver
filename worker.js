@@ -185,17 +185,22 @@ function restoreWalls() {
 	}
 }
 
-function putWalls() {
-	const oldTracksData = storedTracks.map(r => r.map(t => ({
-		isWall: t.isWall,
-		isTrack: t.isTrack,
-		isEmpty: t.isEmpty,
-		value: t.value,
-		xCountValue: t.xCount.value,
-		yCountValue: t.yCount.value,
+function putWalls(savePermanently = false) {
+	let addedTracks = 0;
+	let oldTracksData;
 
-	})));
-	oldVersionsOfTracksData.push(oldTracksData);
+	if (!savePermanently) {
+		oldTracksData = storedTracks.map(r => r.map(t => ({
+			isWall: t.isWall,
+			isTrack: t.isTrack,
+			isEmpty: t.isEmpty,
+			value: t.value,
+			xCountValue: t.xCount.value,
+			yCountValue: t.yCount.value,
+
+		})));
+		oldVersionsOfTracksData.push(oldTracksData);
+	}
 
 	const cornerTrack = storedTracks[0][0];
 	let repeat;
@@ -415,6 +420,40 @@ function putWalls() {
 		return topNeightbour || downNeightbour || leftNeightbour || rightNeightbour || isPresent;
 	}
 
+	function stichTrack(t) {
+		const ends = [];
+
+		if (t.value.includes('t') && t.top?.isTrack) {
+			ends.push(t.top.oppositeEnd);
+		}
+
+		if (t.value.includes('d') && t.down?.isTrack) {
+			ends.push(t.down.oppositeEnd);
+		}
+
+		if (t.value.includes('l') && t.left?.isTrack) {
+			ends.push(t.left.oppositeEnd);
+		}
+
+		if (t.value.includes('r') && t.right?.isTrack) {
+			ends.push(t.right.oppositeEnd);
+		}
+
+		if (ends.length === 2) {
+			const groupCount = ends[0].groupCount + ends[1].groupCount + 1;
+			ends[0].oppositeEnd = ends[1];
+			ends[1].oppositeEnd = ends[0];
+			ends[0].groupCount = ends[1].groupCount = groupCount;
+		} else if (ends.length === 1) {
+			const groupCount = ends[0].groupCount + 1;
+			t.oppositeEnd = ends[0];
+			ends[0].oppositeEnd = t;
+			t.groupCount = ends[0].groupCount = groupCount;
+		} else {
+			t.oppositeEnd = t;
+		}
+	}
+
 	const abstractOccurredTracks = new WeakSet();
 
 	do {
@@ -462,6 +501,11 @@ function putWalls() {
 					--track.yCount.value;
 					++occurredTracks;
 					abstractOccurredTracks.delete(track);
+
+					if (savePermanently) {
+						++addedTracks;
+						stichTrack(track);
+					}
 				} else {
 					++occurredTracks;
 
@@ -546,6 +590,11 @@ function putWalls() {
 					--track.yCount.value;
 					++occurredTracks;
 					abstractOccurredTracks.delete(track);
+
+					if (savePermanently) {
+						++addedTracks;
+						stichTrack(track);
+					}
 				} else {
 					++occurredTracks;
 
@@ -589,15 +638,19 @@ function putWalls() {
 		}
 	} while (repeat);
 
-	for (let i = 0; i < oldTracksData.length; ++i) {
-		for (let j = 0; j < oldTracksData[i].length; ++j) {
-			storedTracks[i][j].isEmpty = oldTracksData[i][j].isEmpty && !storedTracks[i][j].isWall;
-			storedTracks[i][j].isTrack = oldTracksData[i][j].isTrack;
-			storedTracks[i][j].value = oldTracksData[i][j].value;
-			storedTracks[i][j].xCount.value = oldTracksData[i][j].xCountValue;
-			storedTracks[i][j].yCount.value = oldTracksData[i][j].yCountValue;
+	if (!savePermanently) {
+		for (let i = 0; i < oldTracksData.length; ++i) {
+			for (let j = 0; j < oldTracksData[i].length; ++j) {
+				storedTracks[i][j].isEmpty = oldTracksData[i][j].isEmpty && !storedTracks[i][j].isWall;
+				storedTracks[i][j].isTrack = oldTracksData[i][j].isTrack;
+				storedTracks[i][j].value = oldTracksData[i][j].value;
+				storedTracks[i][j].xCount.value = oldTracksData[i][j].xCountValue;
+				storedTracks[i][j].yCount.value = oldTracksData[i][j].yCountValue;
+			}
 		}
 	}
+
+	return addedTracks;
 }
 
 function print() {
@@ -615,7 +668,7 @@ function print() {
 
 self.onmessage = message => {
 	setTimeout(() => {
-		const { tracks, currentEntry, endEntry, tracksToAdd, tracksToConnect } = message.data;
+		let { tracks, currentEntry, endEntry, tracksToAdd, tracksToConnect } = message.data;
 
 		console.log(tracks, currentEntry, endEntry, tracksToAdd, tracksToConnect);
 
@@ -626,7 +679,9 @@ self.onmessage = message => {
 
 		try {
 			print();
-			putWalls();
+			const additionalTracks = putWalls(true);
+			tracksToAdd -= additionalTracks;
+			tracksToConnect += additionalTracks;
 			print();
 			solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect);
 			self.postMessage({ message: 'No solution found' })
