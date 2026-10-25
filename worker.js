@@ -23,7 +23,7 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 	///*
 	++depth;
 	++recursiveCalls;
-	const shouldPutWalls = true && depth < 20;
+	const shouldPutWalls = depth < 19;
 
 	if (shouldPutWalls) {
 		//console.log('before')
@@ -208,15 +208,15 @@ function putWalls() {
 	}
 
 	function isDownBlocked(t) {
-		return !t.down || t.down.isWall && !t.down.isTrack && t.down.isTrack && !t.down.value.includes('t');
+		return !t.down || t.down.isWall && !t.down.isTrack || t.down.isTrack && !t.down.value.includes('t');
 	}
 
 	function isLeftBlocked(t) {
-		return !t.left || t.left.isWall && !t.left.isTrack && t.left.isTrack && !t.left.value.includes('r');
+		return !t.left || t.left.isWall && !t.left.isTrack || t.left.isTrack && !t.left.value.includes('r');
 	}
 
 	function isRightBlocked(t) {
-		return !t.right || t.right.isWall && !t.right.isTrack && t.right.isTrack && !t.right.value.includes('l');
+		return !t.right || t.right.isWall && !t.right.isTrack || t.right.isTrack && !t.right.value.includes('l');
 	}
 
 	function isSurrounded(t) {
@@ -239,6 +239,68 @@ function putWalls() {
 		}
 
 		return surrounded > 2;
+	}
+
+	function getAdditionalHorizontalFills(t) {
+		const topBlocked = isTopBlocked(t);
+		const downBlocked = isDownBlocked(t);
+		const leftBlocked = isLeftBlocked(t);
+		const rightBlocked = isRightBlocked(t);
+
+		if (topBlocked && downBlocked && !leftBlocked && !rightBlocked) {
+			let ans = 2;
+
+			if (!t.left?.isEmpty) {
+				--ans;
+			}
+
+			if (!t.right?.isEmpty) {
+				--ans;
+			}
+
+			return ans;
+		} else if (topBlocked || downBlocked) {
+			if (
+				leftBlocked && t.right?.isEmpty ||
+				rightBlocked && t.left?.isEmpty ||
+				t.left?.isEmpty && t.right?.isEmpty
+			) {
+				return 1;
+			}
+		}
+
+		return 0;
+	}
+
+	function getAdditionalVerticalFills(t) {
+		const topBlocked = isTopBlocked(t);
+		const downBlocked = isDownBlocked(t);
+		const leftBlocked = isLeftBlocked(t);
+		const rightBlocked = isRightBlocked(t);
+
+		if (leftBlocked && rightBlocked && !topBlocked && !downBlocked) {
+			let ans = 2;
+
+			if (!t.top?.isEmpty) {
+				--ans;
+			}
+
+			if (!t.down?.isEmpty) {
+				--ans;
+			}
+
+			return ans;
+		} else if (leftBlocked || rightBlocked) {
+			if (
+				topBlocked && t.down?.isEmpty ||
+				downBlocked && t.top?.isEmpty ||
+				t.top?.isEmpty && t.down?.isEmpty
+			) {
+				return 1;
+			}
+		}
+
+		return 0;
 	}
 
 	function getFillStatus(t) {
@@ -328,14 +390,15 @@ function putWalls() {
 
 		for (let rowStart = cornerTrack; rowStart; rowStart = rowStart.down) {
 			const emptyTracksWithNoFillEvidence = [];
-			let expectedTrackCount = rowStart.yCount.value, walls = 0, occuredTracks = 0;
+			const abstractOccurredTracks = new WeakSet();
+			let expectedTrackCount = rowStart.yCount.value, walls = 0, occurredTracks = 0;
 
 			for (let track = rowStart; track; track = track.right) {
 				/////////////////////////////////
 				if (!track.isEmpty) {
 					if (track.isTrack) {
 						++expectedTrackCount;
-						++occuredTracks;
+						++occurredTracks;
 					} else {
 						++walls;
 					}
@@ -366,14 +429,29 @@ function putWalls() {
 					track.isEmpty = false;
 					--track.xCount.value;
 					--track.yCount.value;
-					++occuredTracks;
+					++occurredTracks;
 				} else {
-					++occuredTracks;
+					++occurredTracks;
+					abstractOccurredTracks.add(track);
 				}
 			}
 
-			if (emptyTracksWithNoFillEvidence.length === width - expectedTrackCount - walls || expectedTrackCount === occuredTracks) {
+			if (emptyTracksWithNoFillEvidence.length === width - expectedTrackCount - walls || expectedTrackCount === occurredTracks) {
 				for (const t of emptyTracksWithNoFillEvidence) {
+					repeat = true;
+					t.isEmpty = false;
+					t.isWall = true;
+				}
+
+				continue;
+			}
+
+			for (const t of emptyTracksWithNoFillEvidence) {
+				if (
+					!abstractOccurredTracks.has(t.left) &&
+					!abstractOccurredTracks.has(t.right) &&
+					occurredTracks + 1 + getAdditionalHorizontalFills(t) > expectedTrackCount
+				) {
 					repeat = true;
 					t.isEmpty = false;
 					t.isWall = true;
@@ -383,14 +461,15 @@ function putWalls() {
 
 		for (let colStart = cornerTrack; colStart; colStart = colStart.right) {
 			const emptyTracksWithNoFillEvidence = [];
-			let expectedTrackCount = colStart.xCount.value, walls = 0, occuredTracks = 0;
+			const abstractOccurredTracks = new WeakSet();
+			let expectedTrackCount = colStart.xCount.value, walls = 0, occurredTracks = 0;
 
 			for (let track = colStart; track; track = track.down) {
 				/////////////////////////////////
 				if (!track.isEmpty) {
 					if (track.isTrack) {
 						++expectedTrackCount;
-						++occuredTracks;
+						++occurredTracks;
 					} else {
 						++walls;
 					}
@@ -421,14 +500,29 @@ function putWalls() {
 					track.isEmpty = false;
 					--track.xCount.value;
 					--track.yCount.value;
-					++occuredTracks;
+					++occurredTracks;
 				} else {
-					++occuredTracks;
+					++occurredTracks;
+					abstractOccurredTracks.add(track);
 				}
 			}
 
-			if (emptyTracksWithNoFillEvidence.length === height - expectedTrackCount - walls || expectedTrackCount === occuredTracks) {
+			if (emptyTracksWithNoFillEvidence.length === height - expectedTrackCount - walls || expectedTrackCount === occurredTracks) {
 				for (const t of emptyTracksWithNoFillEvidence) {
+					repeat = true;
+					t.isEmpty = false;
+					t.isWall = true;
+				}
+
+				continue;
+			}
+
+			for (const t of emptyTracksWithNoFillEvidence) {
+				if (
+					!abstractOccurredTracks.has(t.top) &&
+					!abstractOccurredTracks.has(t.down) &&
+					occurredTracks + 1 + getAdditionalVerticalFills(t) > expectedTrackCount
+				) {
 					repeat = true;
 					t.isEmpty = false;
 					t.isWall = true;
@@ -450,8 +544,7 @@ function putWalls() {
 
 function print() {
 	console.log('-----------------------------------------------------------');
-
-	console.log(storedTracks.map(r => r[0].xCount.value.toString().padStart(2)));
+	console.log(storedTracks[0].map(t => t.xCount.value.toString().padStart(2)));
 
 	for (const r of storedTracks) {
 		const p = r.map(x => x.isWall && !x.isTrack ? ' x' : (x.isTrack ? x.value : '  '));
@@ -471,6 +564,8 @@ self.onmessage = message => {
 		storedTracks = tracks;
 		recursiveCalls = 0;
 
+		const now = performance.now();
+
 		try {
 			print();
 			putWalls();
@@ -478,7 +573,7 @@ self.onmessage = message => {
 			solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect);
 			self.postMessage({ message: 'No solution found' })
 		} catch (message) {
-			console.log(recursiveCalls);
+			console.log(recursiveCalls, performance.now() - now);
 			self.postMessage({ tracks, message })
 		}
 	});
