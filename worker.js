@@ -23,7 +23,7 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 	///*
 	++depth;
 	++recursiveCalls;
-	const shouldPutWalls = depth < 19;
+	const shouldPutWalls = depth < 25;
 
 	if (shouldPutWalls) {
 		//console.log('before')
@@ -303,7 +303,7 @@ function putWalls() {
 		return 0;
 	}
 
-	function getFillStatus(t) {
+	function getFillStatus(t, isPresent) {
 		let
 			topNeightbour = false, topBlocked = false,
 			downNeightbour = false, downBlocked = false,
@@ -332,6 +332,36 @@ function putWalls() {
 			rightBlocked = true;
 		} else if (t.right && t.right.isTrack && t.right.value.includes('l')) {
 			rightNeightbour = true;
+		}
+
+		if (isPresent) {
+			if (topBlocked && downBlocked) {
+				return 'lr';
+			}
+
+			if (leftBlocked && rightBlocked) {
+				return 'td';
+			}
+
+			if (topBlocked) {
+				if (rightBlocked) {
+					return 'dl';
+				}
+
+				if (leftBlocked) {
+					return 'dr';
+				}
+			}
+
+			if (downBlocked) {
+				if (rightBlocked) {
+					return 'tl';
+				}
+
+				if (leftBlocked) {
+					return 'tr';
+				}
+			}
 		}
 
 		if (topBlocked && downBlocked && (leftNeightbour || rightNeightbour)) {
@@ -382,15 +412,16 @@ function putWalls() {
 			return 'dr';
 		}
 
-		return topNeightbour || downNeightbour || leftNeightbour || rightNeightbour;
+		return topNeightbour || downNeightbour || leftNeightbour || rightNeightbour || isPresent;
 	}
+
+	const abstractOccurredTracks = new WeakSet();
 
 	do {
 		repeat = false;
 
 		for (let rowStart = cornerTrack; rowStart; rowStart = rowStart.down) {
 			const emptyTracksWithNoFillEvidence = [];
-			const abstractOccurredTracks = new WeakSet();
 			let expectedTrackCount = rowStart.yCount.value, walls = 0, occurredTracks = 0;
 
 			for (let track = rowStart; track; track = track.right) {
@@ -414,7 +445,7 @@ function putWalls() {
 					continue;
 				}
 
-				const fillStatus = getFillStatus(track);
+				const fillStatus = getFillStatus(track, abstractOccurredTracks.has(track));
 
 				if (!fillStatus) {
 					emptyTracksWithNoFillEvidence.push(track);
@@ -430,9 +461,23 @@ function putWalls() {
 					--track.xCount.value;
 					--track.yCount.value;
 					++occurredTracks;
+					abstractOccurredTracks.delete(track);
 				} else {
 					++occurredTracks;
-					abstractOccurredTracks.add(track);
+
+					if (!abstractOccurredTracks.has(track)) {
+						abstractOccurredTracks.add(track);
+						repeat = true;
+					}
+				}
+			}
+
+			if (width - walls === expectedTrackCount) {
+				for (const t of emptyTracksWithNoFillEvidence) {
+					if (!abstractOccurredTracks.has(t)) {
+						abstractOccurredTracks.add(t);
+						repeat = true;
+					}
 				}
 			}
 
@@ -461,7 +506,6 @@ function putWalls() {
 
 		for (let colStart = cornerTrack; colStart; colStart = colStart.right) {
 			const emptyTracksWithNoFillEvidence = [];
-			const abstractOccurredTracks = new WeakSet();
 			let expectedTrackCount = colStart.xCount.value, walls = 0, occurredTracks = 0;
 
 			for (let track = colStart; track; track = track.down) {
@@ -485,7 +529,7 @@ function putWalls() {
 					continue;
 				}
 
-				const fillStatus = getFillStatus(track);
+				const fillStatus = getFillStatus(track, abstractOccurredTracks.has(track));
 
 				if (!fillStatus) {
 					emptyTracksWithNoFillEvidence.push(track);
@@ -501,9 +545,23 @@ function putWalls() {
 					--track.xCount.value;
 					--track.yCount.value;
 					++occurredTracks;
+					abstractOccurredTracks.delete(track);
 				} else {
 					++occurredTracks;
-					abstractOccurredTracks.add(track);
+
+					if (!abstractOccurredTracks.has(track)) {
+						abstractOccurredTracks.add(track);
+						repeat = true;
+					}
+				}
+			}
+
+			if (height - walls === expectedTrackCount) {
+				for (const t of emptyTracksWithNoFillEvidence) {
+					if (!abstractOccurredTracks.has(t)) {
+						abstractOccurredTracks.add(t);
+						repeat = true;
+					}
 				}
 			}
 
