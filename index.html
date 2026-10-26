@@ -5,20 +5,22 @@
 <head>
 	<title>Track solver</title>
 	<link rel="stylesheet" href="style.css">
+	<link rel="icon" href="favicon.ico">
 	<script defer src="solver.js"></script>
 	<style id="inlineStyle"></style>
 </head>
 
 <body>
 	<main>
+		<div class="row">
+			<label>Width: <input step="1" value="5" min="3" max="12" type="number" id="width"></label>
+			<label>Height: <input step="1" value="5" min="3" max="12" type="number" id="height"></label>
+		</div>
+
 		<div class="field">
 			<div class="horizontal"></div>
 			<div class="vertical"></div>
 			<div class="items"></div>
-		</div>
-		<div class="row">
-			<label>Width: <input step="1" value="5" min="3" max="12" type="number" id="width"></label>
-			<label>Height: <input step="1" value="5" min="3" max="12" type="number" id="height"></label>
 		</div>
 
 		<div class="row" id="selectBtns">
