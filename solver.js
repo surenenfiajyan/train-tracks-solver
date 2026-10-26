@@ -107,7 +107,7 @@ function resize() {
 	itemsCnt.innerHTML = `<div class="item-row">${`<button class="item"></button>`.repeat(widthEl.valueAsNumber)}</div>`.repeat(heightEl.valueAsNumber);
 
 	styleEl.innerHTML = `:root {
-		--item-size: min(${50 / widthEl.valueAsNumber}vw, 50px);
+		--item-size: clamp(20px, ${60 / Math.max(widthEl.valueAsNumber, heightEl.valueAsNumber)}vmin, 50px);
 	}`;
 }
 
