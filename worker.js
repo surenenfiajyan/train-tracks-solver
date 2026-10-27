@@ -23,12 +23,15 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 	///*
 	++depth;
 	++recursiveCalls;
-	const shouldPutWalls = depth < 25;
+	const shouldPutWalls = tracksToAdd > 10;
 
 	if (shouldPutWalls) {
 		//console.log('before')
 		//print();
-		putWalls();
+		if (putWalls() < 0) {
+			restoreWalls();
+			return;
+		}
 		//console.log('after')
 		//print();
 	}
@@ -456,6 +459,7 @@ function putWalls(savePermanently = false) {
 
 	const abstractOccurredTracks = new WeakSet();
 
+	outerLoop:
 	do {
 		repeat = false;
 
@@ -514,6 +518,11 @@ function putWalls(savePermanently = false) {
 						repeat = true;
 					}
 				}
+			}
+
+			if (width - walls < expectedTrackCount) {
+				addedTracks = -1;
+				break outerLoop;
 			}
 
 			if (width - walls === expectedTrackCount) {
@@ -603,6 +612,11 @@ function putWalls(savePermanently = false) {
 						repeat = true;
 					}
 				}
+			}
+
+			if (height - walls < expectedTrackCount) {
+				addedTracks = -1;
+				break outerLoop;
 			}
 
 			if (height - walls === expectedTrackCount) {
