@@ -521,7 +521,7 @@ function putWalls(savePermanently = false) {
 			}
 
 			if (width - walls < expectedTrackCount) {
-				addedTracks = -1;
+				addedTracks = Number.NEGATIVE_INFINITY;
 				break outerLoop;
 			}
 
@@ -615,7 +615,7 @@ function putWalls(savePermanently = false) {
 			}
 
 			if (height - walls < expectedTrackCount) {
-				addedTracks = -1;
+				addedTracks = Number.NEGATIVE_INFINITY;
 				break outerLoop;
 			}
 
