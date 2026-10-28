@@ -815,7 +815,14 @@ self.onmessage = message => {
 			tracksToAdd -= additionalTracks;
 			tracksToConnect += additionalTracks;
 			print();
-			solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect);
+
+			const minDistance = Math.abs(currentEntry.x - endEntry.x) + Math.abs(currentEntry.y - endEntry.y);
+			const remainingTracks = tracksToAdd + tracksToConnect;
+
+			if ((remainingTracks - minDistance) % 2 === 1) {
+				solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect);
+			}
+
 			self.postMessage({ message: 'No solution found' })
 		} catch (message) {
 			console.log(recursiveCalls, performance.now() - now);
