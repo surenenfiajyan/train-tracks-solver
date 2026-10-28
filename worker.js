@@ -46,8 +46,9 @@ const directionData = {
 
 function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, from = null) {
 	const minDistance = Math.abs(currentEntry.x - endEntry.x) + Math.abs(currentEntry.y - endEntry.y);
+	const remainingTracks = tracksToAdd + tracksToConnect;
 
-	if (minDistance >= tracksToAdd + tracksToConnect) {
+	if (minDistance >= remainingTracks || (remainingTracks - minDistance) % 2 === 0) {
 		return;
 	}
 
