@@ -209,7 +209,7 @@ function putWalls(savePermanently = false) {
 	const height = storedTracks.length;
 	const width = storedTracks[0].length;
 
-	function closeUnreachableAreas(tracks) {
+	function closeUnreachableAreas(tracks, followTracks) {
 		const visited = new Set();
 
 		for (let i = 0; i < tracks.length; ++i) {
@@ -235,21 +235,37 @@ function putWalls(savePermanently = false) {
 								candidates.push(t);
 
 								if (!isTopBlocked(t)) {
-									newQueue.push(t.top);
+									if (followTracks || t.top.isEmpty) {
+										newQueue.push(t.top);
+									} else {
+										++entries
+									}
 								}
 
 								if (!isDownBlocked(t)) {
-									newQueue.push(t.down);
+									if (followTracks || t.down.isEmpty) {
+										newQueue.push(t.down);
+									} else {
+										++entries
+									}
 								}
 
 								if (!isLeftBlocked(t)) {
-									newQueue.push(t.left);
+									if (followTracks || t.left.isEmpty) {
+										newQueue.push(t.left);
+									} else {
+										++entries
+									}
 								}
 
 								if (!isRightBlocked(t)) {
-									newQueue.push(t.right);
+									if (followTracks || t.right.isEmpty) {
+										newQueue.push(t.right);
+									} else {
+										++entries
+									}
 								}
-							} else if (t.isTrack) {
+							} else if (followTracks && t.isTrack) {
 								if (t.value.includes('t')) {
 									if (t.top) {
 										newQueue.push(t.top);
@@ -287,7 +303,7 @@ function putWalls(savePermanently = false) {
 						queue = newQueue;
 					} while (queue.length);
 
-					if (entries < 2) {
+					if (entries < 2 || entries % 2 === 1) {
 						for (const candidate of candidates) {
 							candidate.isEmpty = false;
 							candidate.isWall = true;
@@ -569,7 +585,8 @@ function putWalls(savePermanently = false) {
 	outerLoop:
 	do {
 		repeat = false;
-		closeUnreachableAreas(storedTracks);
+		closeUnreachableAreas(storedTracks, false);
+		closeUnreachableAreas(storedTracks, true);
 
 		for (let rowStart = cornerTrack; rowStart; rowStart = rowStart.down) {
 			const emptyTracksWithNoFillEvidence = [];
