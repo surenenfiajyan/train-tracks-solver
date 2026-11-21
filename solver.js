@@ -28,6 +28,18 @@ function terminateWorker() {
 	solveButton.innerText = 'Solve';
 }
 
+function correctNumberInput(input) {
+	if (input instanceof HTMLInputElement) {
+		if (isNaN(input.valueAsNumber)) {
+			input.valueAsNumber = +input.min;
+		}
+
+		input.valueAsNumber = Math.max(input.valueAsNumber, +input.min);
+		input.valueAsNumber = Math.min(input.valueAsNumber, +input.max);
+		input.valueAsNumber = Math.round(input.valueAsNumber);
+	}
+}
+
 selectCnt.onclick = ev => {
 	terminateWorker();
 	const target = ev.target.closest('button');
@@ -47,32 +59,13 @@ selectedEl.click();
 
 widthEl.onchange = heightEl.onchange = ev => {
 	terminateWorker();
-	const target = ev.target;
-
-	if (target instanceof HTMLInputElement) {
-		if (isNaN(target.valueAsNumber)) {
-			target.valueAsNumber = +target.min;
-		}
-
-		target.valueAsNumber = Math.max(target.valueAsNumber, +target.min);
-		target.valueAsNumber = Math.min(target.valueAsNumber, +target.max);
-		target.valueAsNumber = Math.round(target.valueAsNumber);
-
-		resize();
-	}
+	correctNumberInput(ev.target);
+	resize();
 };
 
 horizontalCnt.onchange = verticalCnt.onchange = ev => {
 	terminateWorker();
-	const target = ev.target;
-
-	if (target instanceof HTMLInputElement) {
-		if (isNaN(target.valueAsNumber)) {
-			target.valueAsNumber = 0;
-		}
-
-		target.valueAsNumber = Math.abs(Math.round(target.valueAsNumber));
-	}
+	correctNumberInput(ev.target);
 };
 
 itemsCnt.onmousemove = ev => {
@@ -102,8 +95,8 @@ function onCellClick(ev) {
 
 function resize() {
 	terminateWorker();
-	horizontalCnt.innerHTML = `<input class="item" type="number" value="0">`.repeat(widthEl.valueAsNumber);
-	verticalCnt.innerHTML = `<input class="item" type="number" value="0">`.repeat(heightEl.valueAsNumber);
+	horizontalCnt.innerHTML = `<input class="item" type="number" min="0" max="${heightEl.valueAsNumber}" value="0">`.repeat(widthEl.valueAsNumber);
+	verticalCnt.innerHTML = `<input class="item" type="number" min="0" max="${widthEl.valueAsNumber}" value="0">`.repeat(heightEl.valueAsNumber);
 	itemsCnt.innerHTML = `<div class="item-row">${`<button class="item"></button>`.repeat(widthEl.valueAsNumber)}</div>`.repeat(heightEl.valueAsNumber);
 
 	styleEl.innerHTML = `:root {
@@ -448,7 +441,7 @@ function load() {
 
 				itemsCnt.querySelectorAll('.item-row').forEach((row, y) => {
 					row.querySelectorAll('button').forEach((button, x) => {
-						if (['td', 'tr', 'tl', 'lr', 'dl', 'dr', 'wall'].includes(tracks[y][x])) {
+						if (['td', 'tr', 'tl', 'lr', 'dl', 'dr', 'wall'].includes(tracks?.[y]?.[x])) {
 							const copy = selectCnt.querySelector(`[data-value="${tracks[y][x]}"]`).cloneNode(true);
 							copy.classList.remove('active');
 							button.replaceWith(copy);
@@ -457,13 +450,13 @@ function load() {
 				});
 
 				horizontalCnt.querySelectorAll('input').forEach((el, i) => {
-					if (horizontalCounts && Number.isInteger(horizontalCounts[i]) && horizontalCounts[i] > 0) {
+					if (Number.isInteger(horizontalCounts?.[i]) && horizontalCounts[i] > 0 & horizontalCounts[i] <= width) {
 						el.valueAsNumber = horizontalCounts[i];
 					}
 				});
 
 				verticalCnt.querySelectorAll('input').forEach((el, i) => {
-					if (verticalCounts && Number.isInteger(verticalCounts[i]) && verticalCounts[i] > 0) {
+					if (Number.isInteger(verticalCounts?.[i]) && verticalCounts[i] > 0 && verticalCounts[i] <= height) {
 						el.valueAsNumber = verticalCounts[i];
 					}
 				});
