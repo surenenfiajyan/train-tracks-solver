@@ -113,8 +113,8 @@ function solve() {
 	terminateWorker();
 	const width = widthEl.valueAsNumber;
 	const height = heightEl.valueAsNumber;
-	const horizontalCounts = [...horizontalCnt.querySelectorAll('input')].map(el => ({ value: el.valueAsNumber }));
-	const verticalCounts = [...verticalCnt.querySelectorAll('input')].map(el => ({ value: el.valueAsNumber }));
+	const horizontalCounts = [...horizontalCnt.querySelectorAll('input')].map(el => ({ value: el.valueAsNumber, prevParity: true, nextParity: true }));
+	const verticalCounts = [...verticalCnt.querySelectorAll('input')].map(el => ({ value: el.valueAsNumber, prevParity: true, nextParity: true }));
 	const buttonsMap = new Map();
 	const tracks = [...itemsCnt.querySelectorAll('.item-row')].map((r, y) => [...r.querySelectorAll('button')].map((b, x) => {
 		const value = b.dataset.value ?? null;
@@ -259,6 +259,22 @@ function solve() {
 					return;
 				}
 
+				if (tracks[y][x].value.includes('l') && x > 0) {
+					tracks[y][x].xCount.prevParity = !tracks[y][x].xCount.prevParity;
+				}
+
+				if (tracks[y][x].value.includes('r') && x < width - 1) {
+					tracks[y][x].xCount.nextParity = !tracks[y][x].xCount.nextParity;
+				}
+
+				if (tracks[y][x].value.includes('t') && y > 0) {
+					tracks[y][x].yCount.prevParity = !tracks[y][x].yCount.prevParity;
+				}
+
+				if (tracks[y][x].value.includes('d') && y < height - 1) {
+					tracks[y][x].yCount.nextParity = !tracks[y][x].yCount.nextParity;
+				}
+
 				const { n1X, n2X, n1Y, n2Y } = tracks[y][x];
 
 				const n1CrossesField = n1X < 0 || n1X === width || n1Y < 0 || n1Y === height;
@@ -304,6 +320,29 @@ function solve() {
 	if (!entryA || !entryB) {
 		alert(`Need 2 entry / exit points`);
 		return;
+	}
+
+	const [entryAX, entryBX] = [entryA.x, entryB.x].sort((a, b) => a - b);
+	const [entryAY, entryBY] = [entryA.y, entryB.y].sort((a, b) => a - b);
+
+	for (let x = entryAX; x <= entryBX; ++x) {
+		if (x !== entryAX) {
+			tracks[0][x].xCount.prevParity = !tracks[0][x].xCount.prevParity;
+		}
+
+		if (x !== entryBX) {
+			tracks[0][x].xCount.nextParity = !tracks[0][x].xCount.nextParity;
+		}
+	}
+
+	for (let y = entryAY; y <= entryBY; ++y) {
+		if (y !== entryAY) {
+			tracks[y][0].yCount.prevParity = !tracks[y][0].yCount.prevParity;
+		}
+
+		if (y !== entryBY) {
+			tracks[y][0].yCount.nextParity = !tracks[y][0].yCount.nextParity;
+		}
 	}
 
 	const visited = new WeakSet();
@@ -450,13 +489,13 @@ function load() {
 				});
 
 				horizontalCnt.querySelectorAll('input').forEach((el, i) => {
-					if (Number.isInteger(horizontalCounts?.[i]) && horizontalCounts[i] > 0 & horizontalCounts[i] <= width) {
+					if (Number.isInteger(horizontalCounts?.[i]) && horizontalCounts[i] > 0 & horizontalCounts[i] <= height) {
 						el.valueAsNumber = horizontalCounts[i];
 					}
 				});
 
 				verticalCnt.querySelectorAll('input').forEach((el, i) => {
-					if (Number.isInteger(verticalCounts?.[i]) && verticalCounts[i] > 0 && verticalCounts[i] <= height) {
+					if (Number.isInteger(verticalCounts?.[i]) && verticalCounts[i] > 0 && verticalCounts[i] <= width) {
 						el.valueAsNumber = verticalCounts[i];
 					}
 				});

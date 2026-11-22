@@ -70,6 +70,11 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 		--currentEntry.yCount.value;
 		--tracksToAdd;
 
+		const xCountPrevParity = currentEntry.xCount.prevParity;
+		const xCountNextParity = currentEntry.xCount.nextParity;
+		const yCountPrevParity = currentEntry.yCount.prevParity;
+		const yCountNextParity = currentEntry.yCount.nextParity;
+
 		let direction = from;
 
 		do {
@@ -83,8 +88,20 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 					neighbour !== null &&
 					(neighbour.isEmpty || !neighbour.isWall && neighbours.includes(neighbour.value))
 				) {
-					currentEntry.value = fromMap[from];
-					solveRecursively(neighbour, endEntry, tracksToAdd, tracksToConnect, direction);
+					const newValue = fromMap[from];
+
+					currentEntry.xCount.prevParity = newValue.includes('l') ? !xCountPrevParity : xCountPrevParity;
+					currentEntry.xCount.nextParity = newValue.includes('r') ? !xCountNextParity : xCountNextParity;
+					currentEntry.yCount.prevParity = newValue.includes('t') ? !yCountPrevParity : yCountPrevParity;
+					currentEntry.yCount.nextParity = newValue.includes('d') ? !yCountNextParity : yCountNextParity;
+
+					if (
+						(currentEntry.xCount.value !== 0 || currentEntry.xCount.prevParity && currentEntry.xCount.nextParity) &&
+						(currentEntry.yCount.value !== 0 || currentEntry.yCount.prevParity && currentEntry.yCount.nextParity)
+					) {
+						currentEntry.value = newValue;
+						solveRecursively(neighbour, endEntry, tracksToAdd, tracksToConnect, direction);
+					}
 				}
 			}
 
@@ -98,6 +115,11 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 		currentEntry.isWall = false;
 		currentEntry.isTrack = false;
 		currentEntry.isEmpty = true;
+
+		currentEntry.xCount.prevParity = xCountPrevParity;
+		currentEntry.xCount.nextParity = xCountNextParity;
+		currentEntry.yCount.prevParity = yCountPrevParity;
+		currentEntry.yCount.nextParity = yCountNextParity;
 	} else if (tracksToConnect > 0 && !currentEntry.isWall && currentEntry.isTrack) {
 		currentEntry = currentEntry.oppositeEnd;
 		currentEntry.oppositeEnd.isWall = currentEntry.isWall = true;
@@ -198,6 +220,10 @@ function putWalls(savePermanently = false) {
 			value: t.value,
 			xCountValue: t.xCount.value,
 			yCountValue: t.yCount.value,
+			xCountPrevParity: t.xCount.prevParity,
+			xCountNextParity: t.xCount.nextParity,
+			yCountPrevParity: t.yCount.prevParity,
+			yCountNextParity: t.yCount.nextParity,
 
 		})));
 		oldVersionsOfTracksData.push(oldTracksData);
@@ -633,6 +659,23 @@ function putWalls(savePermanently = false) {
 					track.isEmpty = false;
 					--track.xCount.value;
 					--track.yCount.value;
+
+					if (fillStatus.includes('l')) {
+						track.xCount.prevParity = !track.xCount.prevParity;
+					}
+
+					if (fillStatus.includes('r')) {
+						track.xCount.nextParity = !track.xCount.nextParity;
+					}
+
+					if (fillStatus.includes('t')) {
+						track.yCount.prevParity = !track.yCount.prevParity;
+					}
+
+					if (fillStatus.includes('d')) {
+						track.yCount.nextParity = !track.yCount.nextParity;
+					}
+
 					++occurredTracks;
 					abstractOccurredTracks.delete(track);
 
@@ -647,6 +690,14 @@ function putWalls(savePermanently = false) {
 						abstractOccurredTracks.add(track);
 						repeat = true;
 					}
+				}
+
+				if (
+					track.xCount.value === 0 && !(track.xCount.prevParity && track.xCount.nextParity) ||
+					track.yCount.value === 0 && !(track.yCount.prevParity && track.yCount.nextParity)
+				) {
+					addedTracks = Number.NEGATIVE_INFINITY;
+					break outerLoop;
 				}
 			}
 
@@ -732,6 +783,23 @@ function putWalls(savePermanently = false) {
 					track.isEmpty = false;
 					--track.xCount.value;
 					--track.yCount.value;
+
+					if (fillStatus.includes('l')) {
+						track.xCount.prevParity = !track.xCount.prevParity;
+					}
+
+					if (fillStatus.includes('r')) {
+						track.xCount.nextParity = !track.xCount.nextParity;
+					}
+
+					if (fillStatus.includes('t')) {
+						track.yCount.prevParity = !track.yCount.prevParity;
+					}
+
+					if (fillStatus.includes('d')) {
+						track.yCount.nextParity = !track.yCount.nextParity;
+					}
+
 					++occurredTracks;
 					abstractOccurredTracks.delete(track);
 
@@ -746,6 +814,14 @@ function putWalls(savePermanently = false) {
 						abstractOccurredTracks.add(track);
 						repeat = true;
 					}
+				}
+
+				if (
+					track.xCount.value === 0 && !(track.xCount.prevParity && track.xCount.nextParity) ||
+					track.yCount.value === 0 && !(track.yCount.prevParity && track.yCount.nextParity)
+				) {
+					addedTracks = Number.NEGATIVE_INFINITY;
+					break outerLoop;
 				}
 			}
 
@@ -795,6 +871,10 @@ function putWalls(savePermanently = false) {
 				storedTracks[i][j].value = oldTracksData[i][j].value;
 				storedTracks[i][j].xCount.value = oldTracksData[i][j].xCountValue;
 				storedTracks[i][j].yCount.value = oldTracksData[i][j].yCountValue;
+				storedTracks[i][j].xCount.prevParity = oldTracksData[i][j].xCountPrevParity;
+				storedTracks[i][j].xCount.nextParity = oldTracksData[i][j].xCountNextParity;
+				storedTracks[i][j].yCount.prevParity = oldTracksData[i][j].yCountPrevParity;
+				storedTracks[i][j].yCount.nextParity = oldTracksData[i][j].yCountNextParity;
 			}
 		}
 	}
