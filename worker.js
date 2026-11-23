@@ -492,6 +492,37 @@ function putWalls(savePermanently = false) {
 		}
 
 		if (isPresent) {
+			const lastInRow = t.yCount.value === 1;
+			const lastInColumn = t.xCount.value === 1;
+
+			if (lastInRow) {
+				if (t.yCount.prevParity) {
+					topBlocked = true;
+				} else {
+					topNeightbour = true;
+				}
+
+				if (t.yCount.nextParity) {
+					downBlocked = true;
+				} else {
+					downNeightbour = true;
+				}
+			}
+
+			if (lastInColumn) {
+				if (t.xCount.prevParity) {
+					leftBlocked = true;
+				} else {
+					leftNeightbour = true;
+				}
+
+				if (t.xCount.nextParity) {
+					rightBlocked = true;
+				} else {
+					rightNeightbour = true;
+				}
+			}
+
 			if (topBlocked && downBlocked) {
 				return 'lr';
 			}
