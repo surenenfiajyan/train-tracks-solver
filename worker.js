@@ -56,8 +56,8 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 	const shouldPutWalls = tracksToAdd > 10;
 
 	if (shouldPutWalls) {
-		if (putWalls() < 0) {
-			restoreWalls();
+		if (deduceWallsAndTracks() < 0) {
+			restoreWallsAndTracks();
 			return;
 		}
 	}
@@ -188,14 +188,14 @@ function solveRecursively(currentEntry, endEntry, tracksToAdd, tracksToConnect, 
 	--depth;
 
 	if (shouldPutWalls) {
-		restoreWalls();
+		restoreWallsAndTracks();
 	}
 	//*/
 }
 
 const oldVersionsOfTracksData = [];
 
-function restoreWalls() {
+function restoreWallsAndTracks() {
 	const oldTracksData = oldVersionsOfTracksData.pop();
 
 	if (oldTracksData) {
@@ -208,7 +208,7 @@ function restoreWalls() {
 	}
 }
 
-function putWalls(savePermanently = false) {
+function deduceWallsAndTracks(savePermanently = false) {
 	let addedTracks = 0;
 	let oldTracksData;
 
@@ -235,8 +235,56 @@ function putWalls(savePermanently = false) {
 	const height = storedTracks.length;
 	const width = storedTracks[0].length;
 
+	function checkForCyclesAndBrokenConnections(tracks) {
+		const visited = new Set();
+
+		for (let i = 0; i < tracks.length; ++i) {
+			for (let j = 0; j < tracks[i].length; ++j) {
+				const track = tracks[i][j];
+
+				if (visited.has(track) || !track.isTrack) {
+					continue;
+				}
+
+				visited.add(track);
+
+				let currentTrack = track, previousTrack = null;
+
+				do {
+					if (isTrackConnectionInvalid(currentTrack)) {
+						return false;
+					}
+
+					let nextTrack = null;
+
+					if (currentTrack.value.includes('t') && currentTrack.top !== previousTrack && currentTrack.top?.isTrack) {
+						nextTrack = currentTrack.top;
+					} else if (currentTrack.value.includes('d') && currentTrack.down !== previousTrack && currentTrack.down?.isTrack) {
+						nextTrack = currentTrack.down;
+					} else if (currentTrack.value.includes('l') && currentTrack.left !== previousTrack && currentTrack.left?.isTrack) {
+						nextTrack = currentTrack.left;
+					} else if (currentTrack.value.includes('r') && currentTrack.right !== previousTrack && currentTrack.right?.isTrack) {
+						nextTrack = currentTrack.right;
+					}
+
+					previousTrack = currentTrack;
+					currentTrack = nextTrack;
+
+					if (currentTrack === track) {
+						return false;
+					}
+
+					visited.add(currentTrack);
+				} while (currentTrack);
+			}
+		}
+
+		return true;
+	}
+
 	function closeUnreachableAreas(tracks, followTracks) {
 		const visited = new Set();
+		let repeat = false;
 
 		for (let i = 0; i < tracks.length; ++i) {
 			for (let j = 0; j < tracks[i].length; ++j) {
@@ -334,10 +382,14 @@ function putWalls(savePermanently = false) {
 							candidate.isEmpty = false;
 							candidate.isWall = true;
 						}
+
+						repeat = true;
 					}
 				}
 			}
 		}
+
+		return repeat;
 	}
 
 	function isTopBlocked(t) {
@@ -441,19 +493,19 @@ function putWalls(savePermanently = false) {
 	}
 
 	function isTrackConnectionInvalid(t) {
-		if (t.value.includes('t') && t.top?.isWall && !t.top.isTrack) {
+		if (t.value.includes('t') && t.top && isTopBlocked(t)) {
 			return true;
 		}
 
-		if (t.value.includes('d') && t.down?.isWall && !t.down.isTrack) {
+		if (t.value.includes('d') && t.down && isDownBlocked(t)) {
 			return true;
 		}
 
-		if (t.value.includes('l') && t.left?.isWall && !t.left.isTrack) {
+		if (t.value.includes('l') && t.left && isLeftBlocked(t)) {
 			return true;
 		}
 
-		if (t.value.includes('r') && t.right?.isWall && !t.right.isTrack) {
+		if (t.value.includes('r') && t.right && isRightBlocked(t)) {
 			return true;
 		}
 
@@ -642,8 +694,6 @@ function putWalls(savePermanently = false) {
 	outerLoop:
 	do {
 		repeat = false;
-		closeUnreachableAreas(storedTracks, false);
-		closeUnreachableAreas(storedTracks, true);
 
 		for (let rowStart = cornerTrack; rowStart; rowStart = rowStart.down) {
 			const emptyTracksWithNoFillEvidence = [];
@@ -892,7 +942,16 @@ function putWalls(savePermanently = false) {
 				}
 			}
 		}
+
+		if (!repeat) {
+			repeat ||= closeUnreachableAreas(storedTracks, false);
+			repeat ||= closeUnreachableAreas(storedTracks, true);
+		}
 	} while (repeat);
+
+	if (Number.isFinite(addedTracks) && !checkForCyclesAndBrokenConnections(storedTracks)) {
+		addedTracks = Number.NEGATIVE_INFINITY;
+	}
 
 	if (!savePermanently) {
 		for (let i = 0; i < oldTracksData.length; ++i) {
@@ -939,7 +998,7 @@ self.onmessage = message => {
 
 		try {
 			print();
-			const additionalTracks = putWalls(true);
+			const additionalTracks = deduceWallsAndTracks(true);
 			tracksToAdd -= additionalTracks;
 			tracksToConnect += additionalTracks;
 			print();
